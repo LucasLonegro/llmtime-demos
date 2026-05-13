@@ -1,5 +1,5 @@
 from data.serialize import serialize_arr, SerializerSettings
-from mistralai import Mistral, UserMessage
+from mistralai.client import MistralClient
 import tiktoken
 import os
 import numpy as np
@@ -15,8 +15,8 @@ def init_mistral_client(model):
     global loaded_model, mistral_client
     if mistral_client == {} or loaded_model != model:
         loaded_model = model
-        mistral_client = Mistral(os.environ['MISTRAL_KEY'])
-    return mistral_client
+        client = MistralClient(api_key=os.environ["MISTRAL_KEY"])
+    return client
 
 def tokenize_fn(str, model):
     """

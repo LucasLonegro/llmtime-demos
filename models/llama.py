@@ -51,6 +51,7 @@ def get_tokenizer(model):
     try:
         tokenizer = LlamaTokenizer.from_pretrained(
             repo_id,
+            device_map={"": 0},
             use_fast=False,
         )
     except OSError as e:
@@ -84,7 +85,7 @@ def get_model_and_tokenizer(model_name, cache_model=False):
     try:
         model = LlamaForCausalLM.from_pretrained(
             repo_id,
-            device_map="auto",
+            device_map={"": 0},
             torch_dtype=torch.float16,
         )
     except OSError as e:

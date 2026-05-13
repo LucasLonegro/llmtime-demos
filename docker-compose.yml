@@ -18,8 +18,10 @@ services:
       MISTRAL_KEY: ${MISTRAL_KEY:-}
       HF_TOKEN: ${HF_TOKEN:-${HUGGING_FACE_HUB_TOKEN:-}}
       HUGGING_FACE_HUB_TOKEN: ${HUGGING_FACE_HUB_TOKEN:-${HF_TOKEN:-}}
+      HF_HOME: /cache/huggingface
     volumes:
       - .:/workspace
+      - hf_hub_cache:/cache/huggingface
     working_dir: /workspace
     tty: true
     stdin_open: true
@@ -30,19 +32,23 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        TORCH_INDEX_URL: https://download.pytorch.org/whl/cpu
+        #TORCH_INDEX_URL: https://download.pytorch.org/whl/cpu
+        TORCH_INDEX_URL: https://download.pytorch.org/whl/nightly/cu132
     env_file:
       - path: .env
         required: false
+    gpus: all
     environment:
-      OMP_NUM_THREADS: "4"
+      OMP_NUM_THREADS: "8"
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_API_BASE: ${OPENAI_API_BASE:-https://api.openai.com/v1}
       MISTRAL_KEY: ${MISTRAL_KEY:-}
       HF_TOKEN: ${HF_TOKEN:-${HUGGING_FACE_HUB_TOKEN:-}}
       HUGGING_FACE_HUB_TOKEN: ${HUGGING_FACE_HUB_TOKEN:-${HF_TOKEN:-}}
+      HF_HOME: /cache/huggingface
     volumes:
       - .:/workspace
+      - hf_hub_cache:/cache/huggingface
     working_dir: /workspace
     tty: true
     stdin_open: true
@@ -57,7 +63,7 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        TORCH_INDEX_URL: https://download.pytorch.org/whl/cu118
+        TORCH_INDEX_URL: https://download.pytorch.org/whl/nightly/cu132
     env_file:
       - path: .env
         required: false
@@ -68,10 +74,15 @@ services:
       MISTRAL_KEY: ${MISTRAL_KEY:-}
       HF_TOKEN: ${HF_TOKEN:-${HUGGING_FACE_HUB_TOKEN:-}}
       HUGGING_FACE_HUB_TOKEN: ${HUGGING_FACE_HUB_TOKEN:-${HF_TOKEN:-}}
+      HF_HOME: /cache/huggingface
     volumes:
       - .:/workspace
+      - hf_hub_cache:/cache/huggingface
     working_dir: /workspace
     tty: true
     stdin_open: true
     command: python demo.py
     gpus: all
+
+volumes:
+  hf_hub_cache:

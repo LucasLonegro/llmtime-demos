@@ -1,3 +1,4 @@
+# %%
 import os
 import torch
 os.environ['OMP_NUM_THREADS'] = '4'
@@ -116,9 +117,9 @@ model_hypers = {
 
 model_predict_fns = {
     # Default: works with a normal OpenAI API key (no GPT-4 product access required).
-     'LLMTime GPT-3.5': get_llmtime_predictions_data,
-     'LLMTime GPT-4': get_llmtime_predictions_data,  # needs GPT-4 enabled on your account
-    # 'LLMA2': get_llmtime_predictions_data,
+    # 'LLMTime GPT-3.5': get_llmtime_predictions_data,
+    # 'LLMTime GPT-4': get_llmtime_predictions_data,  # needs GPT-4 enabled on your account
+     'LLMA2': get_llmtime_predictions_data,
     # 'mistral': get_llmtime_predictions_data,
     # 'mistral-api-tiny': get_llmtime_predictions_data,  # needs MISTRAL_KEY
 }
@@ -127,8 +128,8 @@ model_predict_fns = {
 model_names = list(model_predict_fns.keys())
 
 datasets = get_datasets()
-#ds_name = 'AirPassengersDataset'
-ds_name = 'AusBeerDataset'
+ds_name = 'AirPassengersDataset'
+#ds_name = 'AusBeerDataset'
 
 
 data = datasets[ds_name]
