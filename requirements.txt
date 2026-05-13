@@ -1,0 +1,20 @@
+# Versions follow the original project / install.sh era (NeurIPS 2023 codebase).
+# Darts >=0.35 removes TimeSeries.pd_series(); keep below that bound unless you port the code.
+numpy>=1.23.5,<2
+jax[cpu]
+openai==0.28.1
+tiktoken
+tqdm
+matplotlib
+pandas<2.0.0
+darts>=0.24.0,<0.35.0
+gpytorch
+transformers
+datasets
+multiprocess
+SentencePiece
+accelerate
+gdown
+mistralai
+# Classic Jupyter UI (no `jupyter lab build` / static assets needed in slim Docker images).
+notebook>=6.5,<7

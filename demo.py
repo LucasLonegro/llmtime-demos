@@ -5,7 +5,14 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import openai
-openai.api_key = os.environ['OPENAI_API_KEY']
+
+_openai_key = (os.environ.get("OPENAI_API_KEY") or "").strip()
+if not _openai_key:
+    raise SystemExit(
+        "OPENAI_API_KEY is not set. Copy .env.example to .env and set your key, "
+        "or export OPENAI_API_KEY before `docker compose up`."
+    )
+openai.api_key = _openai_key
 openai.api_base = os.environ.get("OPENAI_API_BASE", "https://api.openai.com/v1")
 from data.serialize import SerializerSettings
 from models.utils import grid_iter
@@ -108,17 +115,20 @@ model_hypers = {
 
 
 model_predict_fns = {
-    #'LLMA2': get_llmtime_predictions_data,
-    #'mistral': get_llmtime_predictions_data,
-    #'LLMTime GPT-4': get_llmtime_predictions_data,
-    'mistral-api-tiny': get_llmtime_predictions_data
+    # Default: works with a normal OpenAI API key (no GPT-4 product access required).
+     'LLMTime GPT-3.5': get_llmtime_predictions_data,
+     'LLMTime GPT-4': get_llmtime_predictions_data,  # needs GPT-4 enabled on your account
+    # 'LLMA2': get_llmtime_predictions_data,
+    # 'mistral': get_llmtime_predictions_data,
+    # 'mistral-api-tiny': get_llmtime_predictions_data,  # needs MISTRAL_KEY
 }
 
 
 model_names = list(model_predict_fns.keys())
 
 datasets = get_datasets()
-ds_name = 'AirPassengersDataset'
+#ds_name = 'AirPassengersDataset'
+ds_name = 'AusBeerDataset'
 
 
 data = datasets[ds_name]

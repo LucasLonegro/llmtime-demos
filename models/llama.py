@@ -19,16 +19,42 @@ def llama2_model_string(model_size, chat):
     chat = "chat-" if chat else ""
     return f"meta-llama/Llama-2-{model_size.lower()}-{chat}hf"
 
+
+def _raise_hf_access(repo_id: str, err: BaseException) -> None:
+    msg = str(err).lower()
+    if any(x in msg for x in ("401", "403", "gated", "restricted", "authenticate", "log in", "awaiting a review")):
+        raise RuntimeError(
+            f"Cannot download Llama 2 from Hugging Face repo '{repo_id}'. "
+            "The weights are gated: open the model page, accept the license (wait if access is pending), "
+            "create an access token at https://huggingface.co/settings/tokens , and set HF_TOKEN or "
+            "HUGGING_FACE_HUB_TOKEN in your environment (for Docker Compose, add it to `.env`; see `.env.example`)."
+        ) from err
+    raise err
+
+
+def _llama_batch_device(model):
+    """Where to place tokenizer batches (matches embedding / first real device, not ``meta``)."""
+    emb = model.get_input_embeddings()
+    d = emb.weight.device
+    if d.type == "meta":
+        return torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    return d
+
+
 def get_tokenizer(model):
     name_parts = model.split("-")
     model_size = name_parts[0]
     chat = len(name_parts) > 1
     assert model_size in ["7b", "13b", "70b"]
 
-    tokenizer = LlamaTokenizer.from_pretrained(
-        llama2_model_string(model_size, chat),
-        use_fast=False,
-    )
+    repo_id = llama2_model_string(model_size, chat)
+    try:
+        tokenizer = LlamaTokenizer.from_pretrained(
+            repo_id,
+            use_fast=False,
+        )
+    except OSError as e:
+        _raise_hf_access(repo_id, e)
 
     special_tokens_dict = dict()
     if tokenizer.eos_token is None:
@@ -54,11 +80,15 @@ def get_model_and_tokenizer(model_name, cache_model=False):
 
     tokenizer = get_tokenizer(model_name)
 
-    model = LlamaForCausalLM.from_pretrained(
-        llama2_model_string(model_size, chat),
-        device_map="auto",   
-        torch_dtype=torch.float16,
-    )
+    repo_id = llama2_model_string(model_size, chat)
+    try:
+        model = LlamaForCausalLM.from_pretrained(
+            repo_id,
+            device_map="auto",
+            torch_dtype=torch.float16,
+        )
+    except OSError as e:
+        _raise_hf_access(repo_id, e)
     model.eval()
     if cache_model:
         loaded[model_name] = model, tokenizer
@@ -89,7 +119,8 @@ def llama_nll_fn(model, input_arr, target_arr, settings:SerializerSettings, tran
         return_tensors="pt",
         add_special_tokens=True
     )
-    batch = {k: v.cuda() for k, v in batch.items()}
+    dev = _llama_batch_device(model)
+    batch = {k: v.to(dev) for k, v in batch.items()}
 
     with torch.no_grad():
         out = model(**batch)
@@ -146,7 +177,8 @@ def llama_completion_fn(
         )
 
         batch = {k: v.repeat(batch_size, 1) for k, v in batch.items()}
-        batch = {k: v.cuda() for k, v in batch.items()}
+        dev = _llama_batch_device(model)
+        batch = {k: v.to(dev) for k, v in batch.items()}
         num_input_ids = batch['input_ids'].shape[1]
 
         good_tokens_str = list("0123456789" + settings.time_sep)
